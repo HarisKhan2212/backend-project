@@ -39,3 +39,15 @@ afterAll(() => {
             })
         })
     })
+
+ describe('API Endpoints', () => {
+    test('Get /api return all endpoints that are available', () => {
+        const endpointsTest = require ('../endpoints.json')
+        return request(app)
+        .get('/api')
+        .expect(200)
+        .then(({ body }) => {
+          expect(body).toEqual(endpointsTest);
+        });
+    })    
+})
