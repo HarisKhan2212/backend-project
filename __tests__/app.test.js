@@ -42,17 +42,17 @@ afterAll(() => {
 
  describe('API Endpoints', () => {
     test('Get /api return all endpoints that are available', () => {
-        const endpointsTest = require ('../endpoints.json')
+        const endpoints = require('../endpoints.json')
         return request(app)
         .get('/api')
         .expect(200)
         .then(({ body }) => {
-          expect(body).toEqual(endpointsTest);
-        });
-    })    
-}) 
+            expect(body).toEqual(endpoints)
+        })
+    })
+})
 
-describe.only('/api/articles/:article_id', () => {
+describe('/api/articles/:article_id', () => {
     test('GET 200: responds with the correct article information when given an article id', () => {
         return request(app)
         .get('/api/articles/1')
@@ -87,9 +87,3 @@ describe.only('/api/articles/:article_id', () => {
           });
       });
 })
-
-// api 
-// check exact id includes anything
-// test for 400, because string instead of number
-// test 404 999 could exist but doesnt right now 
-
