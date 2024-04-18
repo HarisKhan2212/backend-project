@@ -50,4 +50,46 @@ afterAll(() => {
           expect(body).toEqual(endpointsTest);
         });
     })    
+}) 
+
+describe.only('/api/articles/:article_id', () => {
+    test('GET 200: responds with the correct article information when given an article id', () => {
+        return request(app)
+        .get('/api/articles/1')
+        .expect(200)
+        .then(({ body }) => {
+            const { article } = body
+            const { author,  title, article_id, topic, created_at, votes, article_img_url } = article
+            expect(article_id).toBe(1)
+            expect(title).toBe('Living in the shadow of a great man')
+            expect(author).toBe('butter_bridge')
+            expect(topic).toBe('mitch')
+            expect(article.body).toBe('I find this existence challenging')
+            expect(created_at).toBe('2020-07-09T20:11:00.000Z')
+            expect(votes).toBe(100)
+            expect(article_img_url).toBe('https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700')
+        })
+    })
+    test('GET 404: responds with article not found when given an article id that can exist but is not currently occupied', () => {
+        return request(app)
+        .get('/api/articles/9999')
+        .expect(404)
+        .then(({ body }) => {
+            expect(body.msg).toBe('Article not found');
+        });
+    })
+    test('GET 400: responds with Bad request when given an article ', () => {
+        return request(app)
+          .get('/api/articles/bannana')
+          .expect(400)
+          .then(({ body }) => {
+            expect(body.msg).toBe('Bad request');
+          });
+      });
 })
+
+// api 
+// check exact id includes anything
+// test for 400, because string instead of number
+// test 404 999 could exist but doesnt right now 
+
