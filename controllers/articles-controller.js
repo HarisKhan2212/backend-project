@@ -1,4 +1,3 @@
-
 const { selectArticleById } = require("../models/articles-model")
 
 exports.getArticleById = (req, res, next) => {
