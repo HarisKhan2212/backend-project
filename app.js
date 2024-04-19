@@ -2,11 +2,11 @@ const express = require('express');
 const { getTopics } = require('./controllers/topics-controller')
 const endPoints = require('./endpoints.json')
 const { getArticleById, getArticles } = require('./controllers/articles-controller')
-const { getCommentsByArticleId } = require('./controllers/comment-articles-controller')
+const { getCommentsByArticleId, postCommentByArticleId } = require('./controllers/comment-articles-controller')
 const app = express();
+app.use(express.json())
 
-
-// endpoints:
+// All endpoints
 
 app.get('/api', (req, res, next) => {
     res.status(200).send(endPoints)
@@ -20,7 +20,10 @@ app.get('/api/articles/:article_id', getArticleById)
 
 app.get('/api/articles/:article_id/comments', getCommentsByArticleId)
 
-// respond with 404 for any undefined endpoints:
+app.post('/api/articles/:article_id/comments', postCommentByArticleId)
+
+// Respond with 404 for any undefined endpoints
+
 app.use((req, res, next) => {
     res.status(404).send({ msg: 'Not found'})
 })
@@ -30,20 +33,21 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
     if (err.status && err.msg) {
         res.status(err.status).send({ msg: err.msg });
-    } else if (err.code === '22P02') {
+    } else if (err.code === '22P02' || err.code === '23502') {
         res.status(400).send({ msg: 'Bad request' });
     } else {
         next(err);
     }
 });
 
-  // 404 Error handler
+// 404 Error handler
   app.use((req, res, next) => {
     res.status(404).send({ msg: 'Not found' });
   });
   
-  // 500 Error handler
+// 500 Error handler
   app.use((err, req, res, next) => {
     res.status(500).send({ msg: 'Internal error' });
   });
+
 module.exports = app
