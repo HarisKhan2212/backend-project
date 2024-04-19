@@ -12,33 +12,33 @@ afterAll(() => {
     return db.end();
   });
 
-    describe ('/api/i-do-not-exist', () => {
-        test('get error message 404 when given a non existant endpoint', () => {
-            return request(app)
-            .get('/api/does-not-exist')
-            .expect(404)
-            .then(({ body }) => {
-                expect(body.msg).toBe('Not found')
-            })
+describe ('/api/i-do-not-exist', () => {
+    test('get error message 404 when given a non existant endpoint', () => {
+        return request(app)
+        .get('/api/does-not-exist')
+        .expect(404)
+        .then(({ body }) => {
+            expect(body.msg).toBe('Not found')
         })
     })
+})
 
-    describe ('GET /api/topics', () => {
-        test('Get response message 200 and an array with slug and description properties', () => {
-            return request(app)
-            .get('/api/topics')
-            .expect(200)
-            .then(({ body }) => {
-                const { topics } = body
-                expect(topics.length).toBe(3)
-                topics.forEach((topic) => {
-                    expect(typeof topic.slug).toBe('string')
-                    expect(typeof topic.description).toBe('string')
+describe ('GET /api/topics', () => {
+    test('Get response message 200 and an array with slug and description properties', () => {
+        return request(app)
+        .get('/api/topics')
+        .expect(200)
+        .then(({ body }) => {
+            const { topics } = body
+            expect(topics.length).toBe(3)
+            topics.forEach((topic) => {
+                expect(typeof topic.slug).toBe('string')
+                expect(typeof topic.description).toBe('string')
                     
-                })
             })
         })
     })
+})
 
  describe('API Endpoints', () => {
     test('Get /api return all endpoints that are available', () => {
@@ -87,3 +87,93 @@ describe('/api/articles/:article_id', () => {
           });
       });
 })
+
+describe('/api/articles', () => {
+    test('GET 200: responds with an array of articles with correct properties', () => {
+        return request(app)
+            .get('/api/articles')
+            .expect(200)
+            .then(({ body }) => {
+                const { articles } = body;
+                expect(Array.isArray(articles)).toBe(true);
+                expect(articles.length).toBeGreaterThan(0);
+                articles.forEach(article => {
+                    expect(typeof article.author).toBe('string');
+                    expect(typeof article.title).toBe('string');
+                    expect(typeof article.article_id).toBe('number');
+                    expect(typeof article.topic).toBe('string');
+                    expect(typeof article.created_at).toBe('string');
+                    expect(typeof article.votes).toBe('number');
+                    expect(typeof article.article_img_url).toBe('string');
+                    expect(article.body).toBeUndefined();
+                });
+            });
+    });
+
+    test('GET 200: responds with correct comment_count for each article', () => {
+        return request(app)
+            .get('/api/articles')
+            .expect(200)
+            .then(({ body }) => {
+                const { articles } = body;
+                articles.forEach(article => {
+                    expect(typeof article.comment_count).toBe('number');
+                });
+            });
+    });
+})
+
+describe('/api/articles/:article_id/comments', () => {
+    test('GET: 200, responds with an array of comments for given article id', (done) => {
+      request(app)
+        .get('/api/articles/1/comments')
+        .expect(200)
+        .then((response) => {
+          expect(response.body.comments.length).toBe(11);
+          response.body.comments.forEach((comment) => {
+            expect(typeof comment.comment_id).toBe('number');
+            expect(typeof comment.votes).toBe('number');
+            expect(typeof comment.created_at).toBe('string');
+            expect(typeof comment.author).toBe('string');
+            expect(typeof comment.body).toBe('string');
+            expect(typeof comment.article_id).toBe('number');
+          });
+          done();
+        })
+        .catch((error) => done(error));
+    });
+  
+    test('GET:404 sends an appropriate status and error message when given a valid but non-existent id', (done) => {
+      request(app)
+        .get('/api/articles/10000/comments')
+        .expect(404)
+        .then((response) => {
+          expect(response.body.msg).toBe('Article not found');
+          done();
+        })
+        .catch((error) => done(error));
+    });
+  
+    test('GET: 200, responds with an empty array if article id exists but has no comments', (done) => {
+      request(app)
+        .get('/api/articles/2/comments')
+        .expect(200)
+        .then((response) => {
+          expect(response.body.comments).toHaveLength(0);
+          done();
+        })
+        .catch((error) => done(error));
+    });
+  
+    test('GET:400 sends an appropriate status and error message when given an invalid id', (done) => {
+      request(app)
+        .get('/api/articles/not-a-team/comments')
+        .expect(400)
+        .then((response) => {
+          expect(response.body.msg).toBe('Bad request');
+          done();
+        })
+        .catch((error) => done(error));
+    });
+  });
+  

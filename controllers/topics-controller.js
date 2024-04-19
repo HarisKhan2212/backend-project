@@ -5,10 +5,3 @@ exports.getTopics = (req, res) => {
     res.status(200).send({ topics });
   });
 };
-
-//req.params
-// pass article ID 
-// pass it into fetch articleID
-// so model can grab and use in query 
-// avoid sql injection $1 brackets after with article id
-// 
