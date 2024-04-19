@@ -33,6 +33,23 @@ exports.selectArticles = () => {
         ORDER BY articles.created_at DESC
     `)
     .then(({ rows }) => {
-        return rows;
+        rows.forEach(row => {
+            row.comment_count = parseInt(row.comment_count)
+        })
+        return rows
     });
 };
+
+exports.ArticleIsValid = (article_id) => {
+    return db.query(`
+        SELECT * FROM articles
+        WHERE article_id = $1
+        ;`, [article_id])
+    .then(({ rows }) => {
+        if (rows.length === 0){
+            return Promise.reject({ status: 404, msg: "Article not found" })
+        }
+        return
+    })
+}
+    
