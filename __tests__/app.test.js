@@ -177,3 +177,68 @@ describe('/api/articles/:article_id/comments', () => {
     });
   });
   
+describe('/api/articles/:article_id/comments', () => {
+
+    test('POST 201: creates a new comment for the given article_id and responds with the inserted comment object', () => {
+        const newComment = { username: 'lurker', body: 'example body' };
+        return request(app)
+        .post('/api/articles/2/comments')
+        .send(newComment)
+        .expect(201)
+        .then(({ body: { comment } }) => {
+            const { comment_id, author, body, article_id, votes, created_at }  = comment;
+            expect(comment_id).toBe(19);
+            expect(article_id).toBe(2);
+            expect(author).toBe('lurker');
+            expect(body).toBe('example body');
+            expect(votes).toBe(0);
+            expect(typeof created_at).toBe('string');
+        });
+    });
+
+    test('POST 400: responds with a bad request if comment does not have a username', () => {
+        const invalidComment = { non_valid_key: 'lurker' };
+        return request(app)
+        .post('/api/articles/2/comments')
+        .send(invalidComment)
+        .expect(400)
+        .then(({ body }) => {
+            expect(body.msg).toBe('Bad request');
+        });
+    });
+
+    test('POST 404: responds with a not found error if article id does not exist', () => {
+        const newComment = { username: 'lurker', body: 'example body' };
+        return request(app)
+        .post('/api/articles/9999/comments')
+        .send(newComment)
+        .expect(404)
+        .then(({ body }) => {
+            expect(body.msg).toBe('Article not found');
+        });
+    });
+
+    test('POST 404: responds with a not found error if the comment has a username that does not exist', () => {
+        const nonExistingUserComment = { username: 'not_real_user', body: 'example body' };
+        return request(app)
+        .post('/api/articles/2/comments')
+        .send(nonExistingUserComment)
+        .expect(404)
+        .then(({ body }) => {
+            expect(body.msg).toBe('Username not found');
+        });
+    });
+
+
+    test('POST 400: responds with a bad request error if the article_id is not valid', () => {
+        const newComment = { username: 'lurker', body: 'example body' };
+        return request(app)
+            .post('/api/articles/bannana/comments')
+            .send(newComment)
+            .expect(400)
+            .then(({ body: { msg } }) => {
+            expect(msg).toBe('Bad request');
+        });
+    }); 
+});
+
