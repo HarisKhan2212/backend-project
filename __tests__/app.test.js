@@ -175,8 +175,16 @@ describe('/api/articles/:article_id/comments', () => {
         })
         .catch((error) => done(error));
     });
+    test('GET 200: responds with article including accurate comment_count from comments table via JOIN on article_id', () => {
+        return request(app)
+        .get('/api/articles/1')
+        .expect(200)
+        .then(({ body : { article: { comment_count } } })=> {
+            expect(comment_count).toBe(11)
+       }) 
+    })
   });
-  
+ 
 describe('/api/articles/:article_id/comments', () => {
 
     test('POST 201: creates a new comment for the given article_id and responds with the inserted comment object', () => {
@@ -242,3 +250,109 @@ describe('/api/articles/:article_id/comments', () => {
     }); 
 });
 
+describe('/api/articles/:article_id', () => {
+
+test('PATCH 200: responds with correctly updated votes in article object', () => {
+    const testPatch = { inc_votes : 1 } 
+    return request(app)
+    .patch('/api/articles/1')
+    .send(testPatch)
+    .expect(200)
+    .then(({ body: { article }}) => {
+        const { author,  title, article_id, topic, created_at, votes, article_img_url } = article
+        expect(votes).toBe(101)
+        expect(article_id).toBe(1)
+        expect(title).toBe('Living in the shadow of a great man')
+        expect(author).toBe('butter_bridge')
+        expect(topic).toBe('mitch')
+        expect(article.body).toBe('I find this existence challenging')
+        expect(created_at).toBe('2020-07-09T20:11:00.000Z')
+        expect(article_img_url).toBe('https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700')
+    })
+})
+test('PATCH 400: responds with a bad request error if sent a incorrect article ', () => {
+    const testPatch = { not_valid : 1 } 
+    return request(app)
+    .patch('/api/articles/1')
+    .send(testPatch)
+    .expect(400)
+    .then(({ body}) => {
+        expect(body.msg).toBe('Bad request')
+    })
+})
+test('PATCH 400: responds with a bad request if inc_votes value is not a number', () => {
+    const testPatch = { inc_votes : 'not a number' } 
+    return request(app)
+    .patch('/api/articles/1')
+    .send(testPatch)
+    .expect(400)
+    .then(({ body })  => {
+        expect(body.msg).toBe('Bad request')
+    })
+})
+test('PATCH 404: responds with article not found when given an article id that can exist but is not currently occupied', () => {
+    const testPatch = { inc_votes : 1 } 
+    return request(app)
+    .patch('/api/articles/99999')
+    .send(testPatch)
+    .expect(404)
+    .then(({ body })  => {
+        expect(body.msg).toBe('Article not found')
+    })
+})
+test('PATCH 400: sends an appropriate status and error message when given an invalid id', () => {
+    const testPatch = { inc_votes : 1 } 
+    return request(app)
+    .patch('/api/articles/not_a_number')
+    .send(testPatch)
+    .expect(400)
+    .then(({ body })  => {
+        expect(body.msg).toBe('Bad request')
+    })
+})
+})
+
+
+describe('/api/comments/:comment_id', () => {
+    test('DELETE 204: deletes the correct comment', () => {
+        return request(app)
+        .delete('/api/comments/1')
+        .expect(204)
+    })
+    test('DELETE 404: responds with a not found error if comment_id valid but not found in db', () => {
+        return request(app)
+        .delete('/api/comments/9999')
+        .expect(404)
+        .then(({ body }) => {
+            expect(body.msg).toBe('Comment not found')
+        })
+    })
+    test('DELETE 400: responds with a bad request error if the comment_id is invalid', () => {
+        return request(app)
+        .delete('/api/comments/bannana')
+        .expect(400)
+        .then(({ body }) => {
+            expect(body.msg).toBe('Bad request')
+        })
+    })
+})
+
+describe('/api/users', () => {
+    describe('GET TESTS', () => {
+        test('GET 200: responds with a users array of objects, each with username, name and avatar_url properties', () => {
+            return request(app)
+            .get('/api/users')
+            .expect(200)
+            .then(({ body: { users } }) => {
+                expect(users).toHaveLength(4)
+                users.forEach((user) => {
+                    expect(user).toEqual(expect.objectContaining({
+                        username: expect.any(String),
+                        name: expect.any(String),
+                        avatar_url: expect.any(String)
+                    }))
+                })
+            })
+        })
+    })
+})
