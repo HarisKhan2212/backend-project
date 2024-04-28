@@ -1,53 +1,54 @@
-const express = require('express');
+const express = require('express')
+const endpoints = require('./endpoints.json')
 const { getTopics } = require('./controllers/topics-controller')
-const endPoints = require('./endpoints.json')
-const { getArticleById, getArticles } = require('./controllers/articles-controller')
-const { getCommentsByArticleId, postCommentByArticleId } = require('./controllers/comment-articles-controller')
-const app = express();
+const { getArticleById, getArticles, patchVotesByArticleId } = require('./controllers/articles-controller')
+const { getCommentsByArticleId, postCommentByArticleId, deleteCommentByCommentId } = require('./controllers/comment-articles-controller')
+const { getUsers } = require('./controllers/user-controller')
+
+const app = express()
+
 app.use(express.json())
 
-// All endpoints
+// Define endpoints
+app.get('/api', (req, res) => res.status(200).send(endpoints));
+app.get('/api/topics', getTopics);
+app.get('/api/articles', getArticles);
+app.get('/api/articles/:article_id', getArticleById);
+app.patch('/api/articles/:article_id', patchVotesByArticleId);
+app.get('/api/articles/:article_id/comments', getCommentsByArticleId);
+app.post('/api/articles/:article_id/comments', postCommentByArticleId);
+app.delete('/api/comments/:comment_id', deleteCommentByCommentId);
+app.get('/api/users', getUsers);
 
-app.get('/api', (req, res, next) => {
-    res.status(200).send(endPoints)
-})
-
-app.get('/api/topics', getTopics)
-
-app.get('/api/articles', getArticles)
-
-app.get('/api/articles/:article_id', getArticleById)
-
-app.get('/api/articles/:article_id/comments', getCommentsByArticleId)
-
-app.post('/api/articles/:article_id/comments', postCommentByArticleId)
-
-// Respond with 404 for any undefined endpoints
-
+// Handle undefined endpoints
 app.use((req, res, next) => {
-    res.status(404).send({ msg: 'Not found'})
-})
-
-// Middleware Error handler 
-
-app.use((err, req, res, next) => {
-    if (err.status && err.msg) {
-        res.status(err.status).send({ msg: err.msg });
-    } else if (err.code === '22P02' || err.code === '23502') {
-        res.status(400).send({ msg: 'Bad request' });
-    } else {
-        next(err);
-    }
+  res.status(404).send({ msg: 'Not found' });
 });
 
-// 404 Error handler
-  app.use((req, res, next) => {
-    res.status(404).send({ msg: 'Not found' });
-  });
-  
-// 500 Error handler
-  app.use((err, req, res, next) => {
-    res.status(500).send({ msg: 'Internal error' });
-  });
+// Middleware error handling
+app.use((err, req, res, next) => {
+  if (err.status && err.msg) {
+    res.status(err.status).send({ msg: err.msg });
+  } else {
+    next(err);
+  }
+});
 
-module.exports = app
+app.use((err, req, res, next) => {
+  if (err.code) {
+    if (err.code === '22P02' || err.code === '23502') {
+      res.status(400).send({ msg: 'Bad request' });
+    } else if (err.code === '23503') {
+      res.status(404).send({ msg: 'Article not found' });
+    }
+  } else {
+    next(err);
+  }
+});
+
+// Default to 500 error for any uncaught errors
+app.use((err, req, res, next) => {
+  res.status(500).send({ msg: 'Internal server error' });
+});
+
+module.exports = app;
